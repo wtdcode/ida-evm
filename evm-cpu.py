@@ -276,7 +276,7 @@ class EVMAsm(object):
         @property
         def is_terminator(self):
             ''' True if the instruction is a basic block terminator '''
-            return self.semantics in ('RETURN', 'STOP', 'INVALID', 'JUMP', 'JUMPI', 'SELFDESTRUCT', 'REVERT')
+            return self.semantics in ('RETURN', 'STOP', 'INVALID', 'UNKNOWN', 'JUMP', 'JUMPI', 'SELFDESTRUCT', 'REVERT')
 
         @property
         def is_branch(self):
@@ -550,7 +550,7 @@ class EVMAsm(object):
         '''
         bytecode = iter(bytecode)
         opcode = next(bytecode)
-        invalid = ('INVALID', 0, 0, 0, 0, 'Unknown opcode')
+        invalid = ('UNKNOWN', 0, 0, 0, 0, 'Unknown opcode')
         name, operand_size, pops, pushes, gas, description = EVMAsm._table.get(opcode, invalid)
         instruction = EVMAsm.Instruction(opcode, name, operand_size, pops, pushes, gas, description, offset=offset)
         if instruction.has_operand:
@@ -968,7 +968,7 @@ class EVMProcessor(idaapi.processor_t):
             if info[2] != 0: # has immediate
                 features |= CF_USE1
 
-            if mnemonic in ('RETURN', 'STOP', 'INVALID', 'JUMP', 'JUMPI', 'SELFDESTRUCT', 'REVERT'):
+            if mnemonic in ('RETURN', 'STOP', 'INVALID', 'UNKNOWN', 'JUMP', 'JUMPI', 'SELFDESTRUCT', 'REVERT'):
                 features |= CF_STOP
 
             if mnemonic in ('JUMP', 'JUMPI'):
