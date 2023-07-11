@@ -6,6 +6,11 @@ import idautils
 
 import known_hashes
 
+import sys
+_BC695 = sys.modules["__main__"].IDAPYTHON_COMPAT_695_API
+if not _BC695:
+    AS_NOTAB=0
+
 '''
     Code from manticore
 '''
@@ -144,7 +149,7 @@ class EVMAsm(object):
                 operand = 0
                 for _ in range(self.operand_size):
                     operand <<= 8
-                    operand |= ord(next(buf))
+                    operand |= next(buf)
                 self._operand = operand
             except StopIteration:
                 raise Exception("Not enough data for decoding")
@@ -199,7 +204,7 @@ class EVMAsm(object):
             ''' Encoded instruction '''
             bytes = []
             bytes.append(chr(self._opcode))
-            for offset in reversed(xrange(self.operand_size)):
+            for offset in reversed(range(self.operand_size)):
                 c = (self.operand >> offset*8 ) & 0xff 
                 bytes.append(chr(c))
             return ''.join(bytes)
@@ -542,7 +547,7 @@ class EVMAsm(object):
 
         '''
         bytecode = iter(bytecode)
-        opcode = ord(next(bytecode))
+        opcode = next(bytecode)
         invalid = ('INVALID', 0, 0, 0, 0, 'Unknown opcode')
         name, operand_size, pops, pushes, gas, description = EVMAsm._table.get(opcode, invalid)
         instruction = EVMAsm.Instruction(opcode, name, operand_size, pops, pushes, gas, description, offset=offset)
@@ -739,7 +744,7 @@ class EVMProcessor(idaapi.processor_t):
     @staticmethod
     def get_prototype(num):
         hash_str = '0x%x' %(num, )
-        function_prototype = known_hashes.knownHashes.get(hash_str, '').encode('ascii','ignore')
+        function_prototype = known_hashes.knownHashes.get(hash_str, '')
         return function_prototype
 
     def notify_emu(self, insn):
@@ -832,7 +837,7 @@ class EVMProcessor(idaapi.processor_t):
             
             for i in range(len(buf)):
                 operand <<= 8
-                operand |= ord(buf[i])
+                operand |= buf[i]
         elif op.type == o_near:
             operand = op.addr
         return operand
@@ -869,13 +874,13 @@ class EVMProcessor(idaapi.processor_t):
         try:
             instruction = EVMAsm.disassemble_one(bytecode)
         except Exception as e:
-            print e
+            print(e)
             return
 
         insn.size = instruction.size
 
         #initialize operands to voids
-        operands = [insn[i] for i in xrange(1, 6)]
+        operands = [insn[i] for i in range(1, 6)]
         for o in operands:
             o.type = o_void
 
@@ -895,7 +900,7 @@ class EVMProcessor(idaapi.processor_t):
             for i in prev_insns:
                 #print i.get_canon_mnem(),
                 if i.ea == ida_idaapi.BADADDR:
-                    print 'ERROR'
+                    print('ERROR')
 
             if (prev_insns[0].get_canon_mnem().startswith("PUSH2") and
                     prev_insns[1].get_canon_mnem().startswith("EQ") and
@@ -931,7 +936,7 @@ class EVMProcessor(idaapi.processor_t):
         try:
             asm = EVMAsm.assemble_one(line, 0)
         except Exception as e:
-            print "Error trying to assemble '%s': %s" %(line, e)
+            print("Error trying to assemble '%s': %s" %(line, e))
             return None
 
         return asm.bytes
@@ -955,7 +960,7 @@ class EVMProcessor(idaapi.processor_t):
         self.instruc.append({'name':"CALLI", 'feature':CF_USE2|CF_STOP|CF_CALL}) # pseudo instruction 
         self.instruction_index[0x101] = 1
         i = len(self.instruc)
-        for (mnemonic, info) in EVMAsm._get_reverse_table().iteritems(): #_table.iteritems():
+        for (mnemonic, info) in EVMAsm._get_reverse_table().items(): #_table.iteritems():
             features = 0 # initially zero
 
             if info[2] != 0: # has immediate
